@@ -62,28 +62,30 @@ class Camera:
 
 
 def combine_rgba_list(colors):
+    def split_rgb_a(color):
+        return color[:3], color[-1]
+
     # Start with the first color as the base
-    r, g, b, a = colors[0]
+    rgb, a = split_rgb_a(colors[0])
 
     # Iterate through the rest of the colors and blend them
     for color in colors[1:]:
-        r2, g2, b2, a2 = color
+        rgb2, a2 = split_rgb_a(color)
 
         # Calculate the new alpha
         a_new = a + a2 * (1 - a)
 
         if a_new == 0:
-            r_new, g_new, b_new = 0, 0, 0  # If fully transparent
+            rgb_new = np.zeros((3, 1))
         else:
             # Blend the RGB channels
-            r_new = (r * a + r2 * a2 * (1 - a)) / a_new
-            g_new = (g * a + g2 * a2 * (1 - a)) / a_new
-            b_new = (b * a + b2 * a2 * (1 - a)) / a_new
+            rgb_new = (rgb * a + rgb2 * a2 * (1 - a)) / a_new
 
         # Update the current color to the new blended color
-        r, g, b, a = r_new, g_new, b_new, a_new
+        rgb = rgb_new
+        a = a_new
 
-    return (r, g, b, a)
+    return list(rgb) + [a]
 
 
 def main():
@@ -110,7 +112,7 @@ def main():
     for x in r:
         for y in r:
             colors = [c.get_color(x, y) for c in cameras]
-            non_empty_colors = [c for c in colors if c is not None]
+            non_empty_colors = [np.array(c) for c in colors if c is not None]
             color = (
                 combine_rgba_list(non_empty_colors)
                 if non_empty_colors
